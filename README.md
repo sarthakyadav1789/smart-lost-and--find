@@ -92,7 +92,7 @@ smart-lost-and-found/
 ⚙️ Installation & Setup
 1️⃣ Clone the Repository
 
-git clone https://github.com/your-username/smart-lost-and-found.git
+git clone git@github.com:sarthakyadav1789/smart-lost-and--find.git
 
 cd smart-lost-and-found
 
