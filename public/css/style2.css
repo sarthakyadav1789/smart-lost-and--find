@@ -1,0 +1,162 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    /* Using a cleaner modern font for a professional look while keeping your gradient */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Changed to center for better focus */
+    color: #333;
+    padding: 20px;
+}
+
+body > h1 {
+    color: white;
+    margin-bottom: 20px;
+    font-weight: 300;
+    letter-spacing: 1px;
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+}
+
+.container {
+    background: #ffffff;
+    width: 70vw; /* Slightly wider for better side-by-side layout */
+    max-width: 900px;
+    border-radius: 16px;
+    text-align: center;
+    overflow: hidden; /* Ensures the purple header respects border radius */
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+}
+
+.container h1 {
+    padding: 20px;
+    font-size: 24px;
+    color: white;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    margin: 0; /* Removed large margins for a cleaner header look */
+}
+
+.box {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    padding: 40px;
+    gap: 40px;
+}
+
+/* MAINTAINS IMAGE PROPORTIONS */
+.box img {
+    width: 50%;
+    height: 300px;
+    object-fit: cover; /* This prevents stretching */
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.btn_box {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+button {
+    width: 100%; /* Buttons now fill the btn_box width */
+    max-width: 250px;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button:first-of-type {
+    background-color: #4f46e5; /* Professional Indigo */
+    color: #ffffff;
+}
+
+button:last-of-type {
+    background-color: #10b981; /* Professional Emerald */
+    color: #ffffff;
+}
+
+button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    filter: brightness(1.1);
+}
+
+/* MODAL STYLES */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px); /* Modern professional touch */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: #ffffff;
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border-radius: 16px;
+    position: relative;
+    animation: fadeIn 0.3s ease;
+}
+
+.close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #9ca3af;
+}
+
+.modal-content h2 {
+    margin-bottom: 20px;
+    color: #1f2937;
+    font-size: 20px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+label {
+    margin-top: 10px;
+    margin-bottom: 5px;
+    color: #4b5563;
+}
+
+input, textarea {
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

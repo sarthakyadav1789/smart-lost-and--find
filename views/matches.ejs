@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Matched Items</title>
+  <style>
+    :root {
+      --primary-color: #4f46e5;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    body {
+      background: var(--bg-gradient);
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 40px 20px;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      color: white;
+      font-weight: 700;
+      margin-bottom: 30px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      overflow: hidden;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+    }
+
+    .image-container {
+      flex-shrink: 0;
+      width: 220px;
+      height: 200px;
+      background-color: #f3f4f6;
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .content {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      flex-grow: 1;
+    }
+
+    .score-badge {
+      display: inline-block;
+      background: #ecfdf5;
+      color: #059669;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      margin-bottom: 12px;
+    }
+
+    .info-row {
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    .label {
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+      display: block;
+    }
+
+    .value {
+      color: var(--text-main);
+    }
+
+    /* --- Description Truncation Logic --- */
+    .description-text {
+      display: -webkit-box;
+      -webkit-line-clamp: 2; /* Shows only 2 lines by default */
+      -webkit-box-orient: vertical;  
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .description-text.expanded {
+      -webkit-line-clamp: unset;
+      display: block;
+    }
+
+    .read-more-btn {
+      background: none;
+      border: none;
+      color: var(--primary-color);
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0;
+      margin-top: 4px;
+      text-transform: uppercase;
+      display: inline-block;
+    }
+
+    .read-more-btn:hover {
+      text-decoration: underline;
+    }
+    /* ------------------------------------ */
+
+    .ai-reason {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #f3f4f6;
+      font-style: italic;
+      font-size: 0.9rem;
+      color: #4b5563;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 20px;
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+
+    .back-link:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      .card { flex-direction: column; }
+      .image-container { width: 100%; height: 250px; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>🔍 Matching Found Items</h1>
+
+<div class="container">
+  <% if (matchedItems.length === 0) { %>
+    <p style="color: white; text-align: center;">No matches found.</p>
+  <% } %>
+
+  <% matchedItems.forEach(item => { %>
+    <div class="card">
+      <div class="image-container">
+        <img src="/<%= item.imagePath %>" alt="Matched item" />
+      </div>
+      <div class="content">
+        <span class="score-badge">Match: <%= item.score %>%</span>
+        
+        <div class="info-row">
+          <span class="label">Location</span>
+          <span class="value"><%= item.location %></span>
+        </div>
+
+        <div class="info-row">
+          <span class="label">Description</span>
+          <span class="value description-text">
+            <%= item.description %>
+          </span>
+          <% if (item.description && item.description.length > 80) { %>
+            <button class="read-more-btn" onclick="toggleReadMore(this)">Read More</button>
+          <% } %>
+        </div>
+
+        <div class="ai-reason">
+          "<%= item.reason %>"
+        </div>
+      </div>
+    </div>
+  <% }) %>
+</div>
+
+<a href="javascript:history.back()" class="back-link">⬅ Go Back</a>
+
+<script>
+  function toggleReadMore(btn) {
+    const textElement = btn.previousElementSibling;
+    const isExpanded = textElement.classList.contains('expanded');
+    
+    if (isExpanded) {
+      textElement.classList.remove('expanded');
+      btn.textContent = 'Read More';
+    } else {
+      textElement.classList.add('expanded');
+      btn.textContent = 'Show Less';
+    }
+  }
+</script>
+
+</body>
+</html>

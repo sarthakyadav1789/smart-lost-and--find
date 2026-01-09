@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Smart Lost And Found</title>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="auth-container">
+            <div class="auth-image-side">
+                <div class="overlay-text">
+                    <h1>SLAF</h1>
+                    <p>Smart Lost And Found</p>
+                </div>
+                <img src="./assets/img_login.webp" alt="Login Illustration" class="login-pic">
+            </div>
+
+            <div class="auth-form-side">
+                <form action="/login" method="POST" class="login-form">
+                    <div class="form-header">
+                        <span class="welcome-text">Welcome to</span>
+                        <h2>Smart Lost And Found</h2>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="field">
+                            <label for="username">Username</label>
+                            <input type="text" id="username" name="username" placeholder="Enter your username" required>
+                        </div>
+
+                        <div class="field">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" placeholder="••••••••" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="sign-btn">Login to Portal</button>
+
+                    <div class="auth-footer">
+                        <p>Not a member? <a href="#">Register</a></p>
+                        <a href="#" class="forgot-link">Forgot Password?</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
