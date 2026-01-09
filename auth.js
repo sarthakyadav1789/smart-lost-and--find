@@ -68,7 +68,7 @@ async function callGeminiWithRetry(payload, retries = 3, delay = 1500) {
 // MongoDB
 // ======================
 mongoose
-  .connect("mongodb://localhost:27017/SLAF")
+  .connect(process.env.MONGODB_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error(err));
 
