@@ -87,6 +87,13 @@ smart-lost-and-found/
 ├── package.json
 └── README.md
 
+
+NOTE : founditems is the databse for items lost
+lost-and-found is actually the database for users
+--refer to structure image
+
+auth.js is actually server.js and is meant to run
+
 ================================================================================================================================
 
 ⚙️ Installation & Setup
