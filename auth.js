@@ -1,93 +1,74 @@
 const express = require("express");
-const bodyParser = require("body-parser");
 const path = require("path");
 const mongoose = require("mongoose");
 require("dotenv").config();
+const fs = require("fs");
+const axios = require("axios");
+
+
+const multer = require("multer");
+
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const User = require("./models/User");
 const FoundItem = require("./models/FoundItem");
 
-const multer = require("multer");
-const fs = require("fs");
-const axios = require("axios");
-
 const app = express();
 const PORT = 3000;
 
-// ======================
-// ENV CHECK
-// ======================
+/* ======================
+   ENV CHECK
+====================== */
 if (!process.env.GEMINI_API_KEY) {
   console.error("❌ GEMINI_API_KEY missing in .env");
   process.exit(1);
 }
 
-// ======================
-// Ensure uploads folder
-// ======================
+/* ======================
+   GEMINI INIT
+====================== */
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const geminiModel = genAI.getGenerativeModel({
+  model: "gemini-2.5-flash"
+});
+
+/* ======================
+   Ensure uploads folder
+====================== */
 if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");
 
-// ======================
-// Middleware
-// ======================
-app.use(bodyParser.urlencoded({ extended: true }));
+/* ======================
+   Middleware
+====================== */
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static("public"));
 app.use("/uploads", express.static("uploads"));
 
-// ======================
-// GEMINI HELPER
-// ======================
-async function callGeminiWithRetry(payload, retries = 3, delay = 1500) {
-  let lastError;
-
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await axios.post(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
-        payload,
-        {
-          params: { key: process.env.GEMINI_API_KEY },
-          headers: { "Content-Type": "application/json" },
-          timeout: 30000
-        }
-      );
-    } catch (err) {
-      lastError = err;
-      console.error("Gemini error:", err.response?.status);
-
-      if (err.response?.status === 503 && i < retries - 1) {
-        await new Promise(r => setTimeout(r, delay));
-      } else break;
-    }
-  }
-  throw lastError;
-}
-
-// ======================
-// MongoDB
-// ======================
+/* ======================
+   MongoDB
+====================== */
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => console.log("✅ MongoDB connected"))
-  .catch(err => console.error(err));
+  .catch(err => console.error("❌ MongoDB error:", err));
 
-// ======================
-// View engine
-// ======================
+/* ======================
+   View engine
+====================== */
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-// ======================
-// Routes
-// ======================
+/* ======================
+   Routes
+====================== */
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// ======================
-// Login
-// ======================
+/* ======================
+   Login (basic demo)
+====================== */
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
@@ -99,53 +80,43 @@ app.post("/login", async (req, res) => {
   res.render("welcome", { username });
 });
 
-// ======================
-// Multer
-// ======================
+/* ======================
+   Multer setup
+====================== */
 const storage = multer.diskStorage({
   destination: "uploads/",
   filename: (req, file, cb) =>
     cb(null, Date.now() + "-" + file.originalname)
 });
+
 const upload = multer({ storage });
 
-// ======================
-// IMAGE → DESCRIPTION (GEMINI)
-// ======================
+/* ======================
+   IMAGE → DESCRIPTION
+====================== */
 async function generateImageDescription(imagePath, mimeType) {
   const imageBase64 = fs.readFileSync(imagePath).toString("base64");
 
-  const payload = {
-    contents: [
-      {
-        parts: [
-          {
-            inlineData: {
-              mimeType,
-              data: imageBase64
-            }
-          },
-          {
-            text:
-              "Describe this object clearly for a lost and found system. Mention color, size, brand, visible text, and unique features."
-          }
-        ]
+  const result = await geminiModel.generateContent([
+    {
+      inlineData: {
+        mimeType: mimeType,
+        data: imageBase64
       }
-    ],
-    generationConfig: {
-      temperature: 0.4,
-      maxOutputTokens: 200
+    },
+    {
+      text:
+        "Describe this object clearly for a lost and found system. Mention color, size, brand, visible text, and unique features."
     }
-  };
+  ]);
 
-  const response = await callGeminiWithRetry(payload);
-
-  return response.data.candidates[0].content.parts[0].text;
+  return result.response.text() || "No description generated";
 }
 
-// ======================
-// Report Found Item
-// ======================
+
+/* ======================
+   Report Found Item
+====================== */
 app.post("/report-found", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
@@ -165,21 +136,21 @@ app.post("/report-found", upload.single("image"), async (req, res) => {
 
     res.render("Success");
   } catch (err) {
-    console.error(err);
+    console.error("❌ Image processing failed:", err);
     res.status(500).send("Image processing failed");
   }
 });
 
-// ======================
-// JSON CLEANER
-// ======================
+/* ======================
+   JSON CLEANER
+====================== */
 function extractJSON(text) {
   return text.replace(/```json|```/g, "").trim();
 }
 
-// ======================
-// MATCHING LOGIC
-// ======================
+/* ======================
+   MATCHING LOGIC
+====================== */
 async function matchLostItem(userDescription, items) {
   const simplifiedItems = items.map(i => ({
     id: i._id.toString(),
@@ -203,36 +174,44 @@ Found items:
 ${JSON.stringify(simplifiedItems, null, 2)}
 `;
 
-  const response = await callGeminiWithRetry({
-    contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: { temperature: 0.2 }
-  });
-
-  const raw = response.data.candidates[0].content.parts[0].text;
+  const result = await geminiModel.generateContent(prompt);
+  const raw = result.response.text() || "[]";
 
   try {
     return JSON.parse(extractJSON(raw));
-  } catch {
-    console.error("Invalid JSON from Gemini:", raw);
+  } catch (err) {
+    console.error("❌ Invalid JSON from Gemini:", raw);
     return [];
   }
 }
 
-// ======================
-// Match endpoint
-// ======================
+/* ======================
+   Match endpoint
+====================== */
 app.post("/match-lost", async (req, res) => {
   try {
-    const foundItems = await FoundItem.find({}).lean();
+    const foundItems = await FoundItem.find({}); // ❌ remove .lean()
+
     const matches = await matchLostItem(req.body.description, foundItems);
 
     const enriched = matches
       .filter(m => m.score >= 60)
       .map(m => {
         const item = foundItems.find(f => f._id.toString() === m.id);
-        return item ? { ...item, score: m.score, reason: m.reason } : null;
+        if (!item) return null;
+
+        return {
+          _id: item._id,                 // ✅ FORCE _id
+          imagePath: item.imagePath,
+          description: item.description,
+          location: item.location,
+          score: m.score,
+          reason: m.reason
+        };
       })
       .filter(Boolean);
+
+    console.log("ENRICHED ITEMS:", enriched); // ✅ DEBUG
 
     res.render("matches", { matchedItems: enriched });
   } catch (err) {
@@ -241,9 +220,70 @@ app.post("/match-lost", async (req, res) => {
   }
 });
 
+
+/* ======================
+   CLAIM & DELETE ITEM
+====================== */
+app.post("/claim-item/:id", async (req, res) => {
+  try {
+    const item = await FoundItem.findById(req.params.id);
+    if (!item) {
+      return res.status(404).render("claimed", { message: "Item not found" });
+    }
+
+    // Delete the image file if it exists
+    if (fs.existsSync(item.imagePath)) fs.unlinkSync(item.imagePath);
+
+    // Delete the item from the database
+    await FoundItem.findByIdAndDelete(req.params.id);
+
+    console.log("✅ Item claimed & deleted:", req.params.id);
+
+    // Render a simple confirmation page
+    res.render("claimed", { message: "✅ Item has been marked as claimed!" });
+  } catch (err) {
+    console.error("❌ Claim failed:", err);
+    res.status(500).render("claimed", { message: "❌ Failed to claim item" });
+  }
+});
+
 // ======================
-// Start server
+// CHECK AVAILABLE GEMINI MODELS
 // ======================
+app.get("/check-gemini-models", async (req, res) => {
+  try {
+    const response = await axios.get(
+      "https://generativelanguage.googleapis.com/v1beta/models",
+      {
+        params: {
+          key: process.env.GEMINI_API_KEY
+        }
+      }
+    );
+
+    // Send only useful fields
+    const models = response.data.models.map(m => ({
+      name: m.name,
+      supportedMethods: m.supportedGenerationMethods
+    }));
+
+    res.json({
+      success: true,
+      models
+    });
+  } catch (err) {
+    console.error("❌ Failed to fetch models:", err.response?.data || err.message);
+    res.status(500).json({
+      success: false,
+      error: err.response?.data || err.message
+    });
+  }
+});
+
+
+/* ======================
+   Start server
+====================== */
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
